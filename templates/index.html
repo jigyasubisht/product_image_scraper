@@ -30,10 +30,31 @@
         }
 
         /* Title Styling */
-        h1 {
-            font-size: 28px;
-            white-space: nowrap; /* Prevents text from breaking into two lines */
-            margin-bottom: 15px;
+        .title-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            white-space: nowrap;
+        }
+
+        .title-container h1 {
+            font-size: 26px;
+            margin: 0;
+        }
+
+        .emoji {
+            font-size: 26px;
+        }
+
+        /* GIF Animation */
+        .animation-container {
+            margin-top: 20px;
+        }
+
+        .animation-container img {
+            width: 180px;
+            max-width: 100%;
         }
 
         /* Upload Form - Responsive */
@@ -110,8 +131,16 @@
                 padding: 20px;
             }
 
-            h1 {
-                font-size: 24px; /* Reduce font size for better fit */
+            .title-container h1 {
+                font-size: 22px;
+            }
+
+            .emoji {
+                font-size: 22px;
+            }
+
+            .animation-container img {
+                width: 150px;
             }
 
             .form-container, .download-section {
@@ -124,7 +153,16 @@
 </head>
 <body>
 
-    <h1>🚀 Upload Excel & Download Images 📷</h1>
+    <div class="title-container">
+        <span class="emoji">🚀</span>
+        <h1>Upload Excel & Download Images</h1>
+        <span class="emoji">📷</span>
+    </div>
+
+    <!-- GIF Animation -->
+    <div class="animation-container">
+        <img src="https://i.imgur.com/MfKXhUy.gif" alt="Excel Upload to Image Processing">
+    </div>
 
     <div class="form-container">
         <form id="uploadForm" action="/" method="POST" enctype="multipart/form-data">
