@@ -17,7 +17,7 @@
             font-family: Arial, sans-serif;
             text-align: center;
             margin: 0;
-            padding: 0;
+            padding: 20px;
             height: 100vh;
             display: flex;
             justify-content: center;
@@ -27,6 +27,13 @@
             background-size: 400% 400%;
             animation: gradientBG 10s infinite ease-in-out;
             color: white;
+        }
+
+        /* Title Styling */
+        h1 {
+            font-size: 28px;
+            white-space: nowrap; /* Prevents text from breaking into two lines */
+            margin-bottom: 15px;
         }
 
         /* Upload Form - Responsive */
@@ -101,6 +108,10 @@
         @media screen and (max-width: 600px) {
             body {
                 padding: 20px;
+            }
+
+            h1 {
+                font-size: 24px; /* Reduce font size for better fit */
             }
 
             .form-container, .download-section {
