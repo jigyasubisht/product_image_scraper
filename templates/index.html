@@ -6,6 +6,7 @@
     <title>Product Image Scraper</title>
     
     <style>
+        /* Background Animation */
         @keyframes gradientBG {
             0% { background-position: 0% 50%; }
             50% { background-position: 100% 50%; }
@@ -16,7 +17,7 @@
             font-family: Arial, sans-serif;
             text-align: center;
             margin: 0;
-            padding: 20px;
+            padding: 0;
             height: 100vh;
             display: flex;
             justify-content: center;
@@ -28,55 +29,28 @@
             color: white;
         }
 
-        .title-container {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-            white-space: nowrap;
-        }
-
-        .title-container h1 {
-            font-size: 26px;
-            margin: 0;
-        }
-
-        .emoji {
-            font-size: 26px;
-        }
-
-        .animation-container {
-            margin-top: 20px;
-        }
-
-        .animation-container img {
-            width: 180px;
-            max-width: 100%;
-        }
-
-        .form-container {
+        /* Upload Box */
+        .container {
             background: rgba(255, 255, 255, 0.2);
             padding: 20px;
             border-radius: 10px;
             box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
             width: 90%;
-            max-width: 500px;
+            max-width: 400px;
             backdrop-filter: blur(10px);
         }
 
         input[type="file"] {
             padding: 10px;
-            width: 100%;
-            max-width: 90%;
             border: none;
             background: white;
             color: black;
-            margin: 10px 0;
+            margin: 10px;
             border-radius: 5px;
         }
 
         button {
-            padding: 12px 20px;
+            padding: 12px 25px;
             background: #ff6b6b;
             color: white;
             border: none;
@@ -84,48 +58,72 @@
             font-size: 16px;
             border-radius: 5px;
             transition: all 0.3s ease;
-            width: 100%;
-            max-width: 90%;
         }
 
+        button:hover {
+            background: #ff4c4c;
+            transform: scale(1.1);
+        }
+
+        /* Fancy Loader */
+        .loader {
+            display: none;
+            margin-top: 20px;
+            border: 5px solid rgba(255, 255, 255, 0.3);
+            border-top: 5px solid white;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Download Section */
         .download-section {
             display: none;
             margin-top: 20px;
+            background: rgba(0, 0, 0, 0.2);
             padding: 20px;
             border-radius: 10px;
-            width: 90%;
-            max-width: 500px;
         }
     </style>
 
 </head>
 <body>
 
-    <div class="title-container">
-        <span class="emoji">🚀</span>
-        <h1>Upload Excel & Download Images</h1>
-        <span class="emoji">📷</span>
-    </div>
+    <h1>🚀 Upload Excel & Download Images 📷</h1>
 
-    <div class="animation-container">
-        <img src="https://media.giphy.com/media/WoWm8YzFQJg5i/giphy.gif" alt="Excel Upload to Image Processing">
-    </div>
-
-    <div class="form-container">
+    <div class="container">
         <form id="uploadForm" action="/" method="POST" enctype="multipart/form-data">
             <input type="file" name="file" id="fileInput" accept=".xlsx" required>
             <button type="submit">Upload & Download Images</button>
         </form>
+
+        <div class="loader" id="loader"></div>
+
+        {% if download_url %}
+        <div class="download-section" id="downloadSection">
+            <h2>✅ Download Images</h2>
+            <a href="{{ download_url }}" download>
+                <button>Download Images ZIP</button>
+            </a>
+        </div>
+        {% endif %}
     </div>
 
-    {% if download_url %}
-    <div class="download-section">
-        <h2>✅ Download Images</h2>
-        <a href="{{ download_url }}" download>
-            <button>Download Images ZIP</button>
-        </a>
-    </div>
-    {% endif %}
+    <script>
+        document.getElementById("uploadForm").addEventListener("submit", function () {
+            document.getElementById("loader").style.display = "block"; 
+        });
+
+        if (document.getElementById("downloadSection")) {
+            document.getElementById("downloadSection").style.display = "block";
+        }
+    </script>
 
 </body>
 </html>

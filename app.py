@@ -1,30 +1,27 @@
 import os
 import zipfile
 import pandas as pd
-from flask import Flask, request, render_template, send_file
+from flask import Flask, render_template, request, send_file
 from google_images_search import GoogleImagesSearch
+from PIL import Image
 
-# Initialize Flask app
+# Flask App Initialization
 app = Flask(__name__)
 
-# Google API Credentials (Replace with your own)
+# Google API Credentials
 API_KEY = 'AIzaSyCMTGZgBiOCBKmVyVtBwWedolEwKpYmJFo'
 CSE_ID = '22a1154af09b44051'
 
-# Initialize Google Image Search
 gis = GoogleImagesSearch(API_KEY, CSE_ID)
 
-# Configure Uploads & Download Folder
+# Upload Folder
 UPLOAD_FOLDER = "uploads"
-DOWNLOAD_FOLDER = "downloaded_images"
-app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
-app.config['MAX_CONTENT_LENGTH'] = 10 * 1024 * 1024  # Limit file size to 10MB
-
-# Ensure necessary folders exist
+IMAGE_FOLDER = "downloaded_images"
+ZIP_PATH = "images.zip"
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
-os.makedirs(DOWNLOAD_FOLDER, exist_ok=True)
+os.makedirs(IMAGE_FOLDER, exist_ok=True)
 
-# Function to download the top image for a given search term
+# Function to Download & Optimize Image
 def download_image(search_term, save_path):
     search_params = {
         'q': search_term,
@@ -33,12 +30,28 @@ def download_image(search_term, save_path):
         'imgType': 'photo',
         'safe': 'off'
     }
-    gis.search(search_params=search_params)
-    for image in gis.results():
-        image.download(save_path)
-        break  # Only download the first result
+    try:
+        gis.search(search_params=search_params)
+        if not gis.results():
+            print(f"⚠️ No images found for {search_term}. Skipping...")
+            return
 
-# Route for Uploading Excel & Downloading Images
+        for image in gis.results():
+            image.download(save_path)
+
+            # Convert & Resize Image
+            img = Image.open(save_path)
+            img = img.convert("RGB")
+            img = img.resize((300, 300))
+            img.save(save_path, "JPEG", quality=80)
+            break
+
+        print(f"✅ Downloaded & Optimized: {search_term}")
+
+    except Exception as e:
+        print(f"❌ Failed to download image for {search_term}: {e}")
+
+# File Upload Route
 @app.route("/", methods=["GET", "POST"])
 def upload_file():
     if request.method == "POST":
@@ -48,45 +61,42 @@ def upload_file():
         file = request.files["file"]
         if file.filename == "":
             return "No selected file", 400
-        
-        file_path = os.path.join(app.config["UPLOAD_FOLDER"], file.filename)
+
+        file_path = os.path.join(UPLOAD_FOLDER, file.filename)
         file.save(file_path)
 
-        # Process Excel file
-        df = pd.read_excel(file_path, engine='openpyxl')
+        try:
+            df = pd.read_excel(file_path, engine="openpyxl")
+        except Exception as e:
+            return f"❌ Error reading Excel file: {e}", 500
 
-        # Check if 'posDescription' column exists
-        if 'posDescription' not in df.columns:
-            return "Error: Excel must contain a 'posDescription' column", 400
+        if "posDescription" not in df.columns:
+            return "❌ Error: Excel file must contain a 'posDescription' column.", 400
 
-        # Download images for each product
-        for index, row in df.iterrows():
+        # Clear previous images
+        for f in os.listdir(IMAGE_FOLDER):
+            os.remove(os.path.join(IMAGE_FOLDER, f))
+
+        # Download images
+        for _, row in df.iterrows():
             pos_description = str(row['posDescription'])
             valid_filename = "".join(c for c in pos_description if c.isalnum() or c in (' ', '_')).rstrip()
-            save_path = os.path.join(DOWNLOAD_FOLDER, f"{valid_filename}.jpg")
+            save_path = os.path.join(IMAGE_FOLDER, f"{valid_filename}.jpg")
+            download_image(pos_description, save_path)
 
-            try:
-                download_image(pos_description, save_path)
-            except Exception as e:
-                print(f"Failed to download image for: {pos_description}. Error: {e}")
-
-        # Zip all images
-        zip_path = os.path.join(DOWNLOAD_FOLDER, "images.zip")
-        with zipfile.ZipFile(zip_path, 'w') as zipf:
-            for root, dirs, files in os.walk(DOWNLOAD_FOLDER):
-                for file in files:
-                    if file.endswith(".jpg") or file.endswith(".png"):
-                        zipf.write(os.path.join(root, file), file)
+        # Create Zip File
+        with zipfile.ZipFile(ZIP_PATH, 'w') as zipf:
+            for img in os.listdir(IMAGE_FOLDER):
+                zipf.write(os.path.join(IMAGE_FOLDER, img), img)
 
         return render_template("index.html", download_url="/download")
 
     return render_template("index.html")
 
-# Route to Download Images ZIP
+# Download Route
 @app.route("/download")
-def download():
-    zip_path = os.path.join(DOWNLOAD_FOLDER, "images.zip")
-    return send_file(zip_path, as_attachment=True)
+def download_zip():
+    return send_file(ZIP_PATH, as_attachment=True)
 
 if __name__ == "__main__":
     app.run(debug=True)
