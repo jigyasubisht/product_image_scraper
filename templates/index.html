@@ -6,7 +6,6 @@
     <title>Product Image Scraper</title>
     
     <style>
-        /* Smooth Background Animation */
         @keyframes gradientBG {
             0% { background-position: 0% 50%; }
             50% { background-position: 100% 50%; }
@@ -29,7 +28,6 @@
             color: white;
         }
 
-        /* Title Styling */
         .title-container {
             display: flex;
             align-items: center;
@@ -47,7 +45,6 @@
             font-size: 26px;
         }
 
-        /* GIF Animation */
         .animation-container {
             margin-top: 20px;
         }
@@ -57,7 +54,6 @@
             max-width: 100%;
         }
 
-        /* Upload Form - Responsive */
         .form-container {
             background: rgba(255, 255, 255, 0.2);
             padding: 20px;
@@ -92,61 +88,13 @@
             max-width: 90%;
         }
 
-        button:hover {
-            background: #ff4c4c;
-            transform: scale(1.05);
-        }
-
-        /* Fancy Loader */
-        .loader {
-            display: none;
-            margin-top: 20px;
-            border: 5px solid rgba(255, 255, 255, 0.3);
-            border-top: 5px solid white;
-            border-radius: 50%;
-            width: 50px;
-            height: 50px;
-            animation: spin 1s linear infinite;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        /* Download Section */
         .download-section {
             display: none;
             margin-top: 20px;
-            background: rgba(0, 0, 0, 0.2);
             padding: 20px;
             border-radius: 10px;
             width: 90%;
             max-width: 500px;
-        }
-
-        /* Mobile Responsiveness */
-        @media screen and (max-width: 600px) {
-            body {
-                padding: 20px;
-            }
-
-            .title-container h1 {
-                font-size: 22px;
-            }
-
-            .emoji {
-                font-size: 22px;
-            }
-
-            .animation-container img {
-                width: 150px;
-            }
-
-            .form-container, .download-section {
-                width: 100%;
-                max-width: 100%;
-            }
         }
     </style>
 
@@ -159,10 +107,8 @@
         <span class="emoji">📷</span>
     </div>
 
-    <!-- GIF Animation -->
     <div class="animation-container">
-        <img src="https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExeWI1eGJyb3NiaDJ3d3NyNm90em9kaHI3YmRkZG1yd3gyM2I2bmQ0NCZlcD12MV9naWZzX3NlYXJjaCZjdD1n/WoWm8YzFQJg5i/giphy.gif" 
-             alt="Excel Upload to Image Processing">
+        <img src="https://media.giphy.com/media/WoWm8YzFQJg5i/giphy.gif" alt="Excel Upload to Image Processing">
     </div>
 
     <div class="form-container">
@@ -172,27 +118,14 @@
         </form>
     </div>
 
-    <div class="loader" id="loader"></div>
-
     {% if download_url %}
-    <div class="download-section" id="downloadSection">
+    <div class="download-section">
         <h2>✅ Download Images</h2>
         <a href="{{ download_url }}" download>
             <button>Download Images ZIP</button>
         </a>
     </div>
     {% endif %}
-
-    <script>
-        document.getElementById("uploadForm").addEventListener("submit", function () {
-            document.getElementById("loader").style.display = "block";  // Show Loader
-        });
-
-        // Show Download Section if available
-        if (document.getElementById("downloadSection")) {
-            document.getElementById("downloadSection").style.display = "block";
-        }
-    </script>
 
 </body>
 </html>
