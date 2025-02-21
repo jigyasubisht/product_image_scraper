@@ -4,20 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Product Image Scraper</title>
-
+    
     <style>
-        @keyframes gradientBG {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
-        }
-
         body {
             font-family: Arial, sans-serif;
             text-align: center;
             margin: 0;
             padding: 0;
-            height: 100vh;
+            min-height: 100vh;
             display: flex;
             justify-content: center;
             align-items: center;
@@ -28,40 +22,39 @@
             color: white;
         }
 
-        form {
+        .container {
+            width: 90%;
+            max-width: 450px;
             background: rgba(255, 255, 255, 0.2);
             padding: 20px;
             border-radius: 10px;
-            width: 50%;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
             backdrop-filter: blur(10px);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
         }
 
-        input[type="file"] {
+        input[type="file"], button {
             padding: 10px;
+            width: 100%;
+            border: none;
             background: white;
             color: black;
-            margin: 10px;
+            margin: 10px 0;
             border-radius: 5px;
-        }
-
-        button {
-            padding: 12px 25px;
-            background: #ff6b6b;
-            color: white;
-            border: none;
+            text-align: center;
             cursor: pointer;
             font-size: 16px;
-            border-radius: 5px;
         }
 
         .loader {
             display: none;
-            margin-top: 20px;
+            width: 50px;
+            height: 50px;
             border: 5px solid rgba(255, 255, 255, 0.3);
             border-top: 5px solid white;
             border-radius: 50%;
-            width: 50px;
-            height: 50px;
             animation: spin 1s linear infinite;
         }
 
@@ -69,45 +62,38 @@
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
-
-        .download-section {
-            display: none;
-            margin-top: 20px;
-            background: rgba(0, 0, 0, 0.2);
-            padding: 20px;
-            border-radius: 10px;
-        }
     </style>
 
 </head>
 <body>
 
-    <h1>🚀 Upload Excel & Download Images 📷</h1>
+    <div class="container">
+        <h1>🚀 Upload Excel & Download Images 📷</h1>
 
-    <form id="uploadForm" action="/" method="POST" enctype="multipart/form-data">
-        <input type="file" name="file" id="fileInput" accept=".xlsx" required>
-        <button type="submit">Upload & Download Images</button>
-    </form>
+        <form id="uploadForm" action="/" method="POST" enctype="multipart/form-data">
+            <input type="file" name="file" accept=".xlsx" required>
+            <button type="submit">Upload & Process Images</button>
+        </form>
 
-    <div class="loader" id="loader"></div>
+        <div class="loader" id="loader"></div>
 
-    {% if download_url %}
-    <div class="download-section" id="downloadSection">
-        <h2>✅ Download Images</h2>
-        <a href="{{ download_url }}" download>
+        <a id="downloadBtn" href="/download" download style="display: none;">
             <button>Download Images ZIP</button>
         </a>
     </div>
-    {% endif %}
 
     <script>
-        document.getElementById("uploadForm").addEventListener("submit", function () {
-            document.getElementById("loader").style.display = "block";
-        });
-
-        if (document.getElementById("downloadSection")) {
-            document.getElementById("downloadSection").style.display = "block";
-        }
+        setInterval(() => {
+            fetch("/status").then(res => res.json()).then(data => {
+                if (data.status === "processing") {
+                    document.getElementById("loader").style.display = "block";
+                }
+                if (data.status === "done") {
+                    document.getElementById("loader").style.display = "none";
+                    document.getElementById("downloadBtn").style.display = "block";
+                }
+            });
+        }, 3000);
     </script>
 
 </body>
