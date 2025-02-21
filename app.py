@@ -1,57 +1,68 @@
 import os
 import zipfile
+import requests
 import pandas as pd
 from flask import Flask, render_template, request, send_file
-from google_images_search import GoogleImagesSearch
+from bs4 import BeautifulSoup
 from PIL import Image
 
 # Flask App Initialization
 app = Flask(__name__)
 
-# Google API Credentials
-API_KEY = 'AIzaSyCMTGZgBiOCBKmVyVtBwWedolEwKpYmJFo'
-CSE_ID = '22a1154af09b44051'
-
-gis = GoogleImagesSearch(API_KEY, CSE_ID)
-
-# Upload Folder
+# Upload & Download Folders
 UPLOAD_FOLDER = "uploads"
 IMAGE_FOLDER = "downloaded_images"
 ZIP_PATH = "images.zip"
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 os.makedirs(IMAGE_FOLDER, exist_ok=True)
 
-# Function to Download & Optimize Image
-def download_image(search_term, save_path):
-    search_params = {
-        'q': search_term,
-        'num': 1,
-        'fileType': 'jpg|png',
-        'imgType': 'photo',
-        'safe': 'off'
-    }
+# Function to get image links using BeautifulSoup
+def get_image_links(search_term):
+    query = search_term.replace(" ", "+")
+    url = f"https://www.google.com/search?q={query}&tbm=isch"
+    headers = {"User-Agent": "Mozilla/5.0"}
+    
     try:
-        gis.search(search_params=search_params)
-        if not gis.results():
-            print(f"⚠️ No images found for {search_term}. Skipping...")
-            return
+        response = requests.get(url, headers=headers)
+        response.raise_for_status()
+        
+        soup = BeautifulSoup(response.text, "html.parser")
+        img_tags = soup.find_all("img")
+        
+        img_urls = [img["src"] for img in img_tags if "src" in img.attrs]
+        return img_urls[1:]  # Ignore first result (Google logo)
+    
+    except requests.exceptions.RequestException as e:
+        print(f"❌ Error fetching images for {search_term}: {e}")
+        return []
 
-        for image in gis.results():
-            image.download(save_path)
-
-            # Convert & Resize Image
-            img = Image.open(save_path)
+# Function to Download & Optimize Images
+def download_image(search_term, save_path):
+    image_links = get_image_links(search_term)
+    
+    if not image_links:
+        print(f"⚠️ No images found for {search_term}. Skipping...")
+        return
+    
+    try:
+        img_url = image_links[0]
+        img_data = requests.get(img_url, stream=True).content
+        
+        with open(save_path, "wb") as f:
+            f.write(img_data)
+        
+        # Convert & Resize Image
+        with Image.open(save_path) as img:
             img = img.convert("RGB")
             img = img.resize((300, 300))
             img.save(save_path, "JPEG", quality=80)
-            break
-
+        
         print(f"✅ Downloaded & Optimized: {search_term}")
 
     except Exception as e:
         print(f"❌ Failed to download image for {search_term}: {e}")
 
-# File Upload Route
+# Route for File Upload & Image Download
 @app.route("/", methods=["GET", "POST"])
 def upload_file():
     if request.method == "POST":
@@ -73,19 +84,24 @@ def upload_file():
         if "posDescription" not in df.columns:
             return "❌ Error: Excel file must contain a 'posDescription' column.", 400
 
-        # Clear previous images
+        # Clear previous images safely
         for f in os.listdir(IMAGE_FOLDER):
-            os.remove(os.path.join(IMAGE_FOLDER, f))
+            file_path = os.path.join(IMAGE_FOLDER, f)
+            try:
+                os.chmod(file_path, 0o777)
+                os.remove(file_path)
+            except Exception as e:
+                print(f"❌ Could not delete {f}: {e}")
 
         # Download images
         for _, row in df.iterrows():
-            pos_description = str(row['posDescription'])
+            pos_description = str(row["posDescription"])
             valid_filename = "".join(c for c in pos_description if c.isalnum() or c in (' ', '_')).rstrip()
             save_path = os.path.join(IMAGE_FOLDER, f"{valid_filename}.jpg")
             download_image(pos_description, save_path)
 
-        # Create Zip File
-        with zipfile.ZipFile(ZIP_PATH, 'w') as zipf:
+        # Create ZIP File
+        with zipfile.ZipFile(ZIP_PATH, "w") as zipf:
             for img in os.listdir(IMAGE_FOLDER):
                 zipf.write(os.path.join(IMAGE_FOLDER, img), img)
 
@@ -93,7 +109,7 @@ def upload_file():
 
     return render_template("index.html")
 
-# Download Route
+# Route to Download the Zip File
 @app.route("/download")
 def download_zip():
     return send_file(ZIP_PATH, as_attachment=True)
